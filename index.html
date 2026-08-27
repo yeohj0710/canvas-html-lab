@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>캔버스 안의 진짜 DOM</title>
+<meta name="description" content="캔버스 한 장 안에서 휘고 부서지는 판인데, 그 안의 버튼은 눌리고 입력칸에는 글자가 들어갑니다.">
+<meta name="color-scheme" content="dark">
+<meta property="og:title" content="캔버스 안의 진짜 DOM">
+<meta property="og:description" content="그림이 아니라 살아 있는 DOM 입니다. 눌러 보고, 끌어 보고, 글자도 쳐 보세요.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b8cff'/%3E%3Cpath d='M9 21c3-8 11 8 14 0' stroke='%23fff' stroke-width='2.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./assets/site.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <span class="mark" aria-hidden="true"></span>
+    <span class="brand">canvas html lab</span>
+    <span class="badge" id="badge" title="이 브라우저가 쓰는 그리기 경로">경로 확인 중</span>
+    <a class="src" href="https://www.youtube.com/watch?v=8ucoskmA1yg" target="_blank" rel="noopener">본 영상</a>
+  </div>
+</header>
+
+<main>
+
+  <section class="wrap hero">
+    <h1>캔버스 안의 진짜 DOM</h1>
+    <p class="lede">
+      아래 판은 그림이 아닙니다. 캔버스가 텍스처 한 장으로 굽어서 휘어 그리지만,
+      그 안의 버튼은 눌리고 목록은 굴러가고 입력칸에는 키보드로 글자가 들어갑니다.
+    </p>
+  </section>
+
+  <section class="wrap lab">
+    <div class="stage-wrap" id="wrap">
+      <canvas id="cv" aria-hidden="true"></canvas>
+      <div class="holder" id="holder"><div id="stage"></div></div>
+      <p class="fallback" id="fallback" hidden>이 브라우저에서는 판을 그대로 보여 줍니다.</p>
+    </div>
+
+    <p class="hint">
+      빈 곳을 끌면 판이 기울고, 버튼 위에서 누르면 버튼이 눌립니다.
+      두 번 누르면 각도가 돌아오고, 휠을 굴리면 목록이 움직입니다.
+    </p>
+
+    <div class="panel">
+      <div class="ctl">
+        <span class="ctl-k">효과</span>
+        <div class="chips" id="chips" role="group" aria-label="효과 고르기"></div>
+      </div>
+      <div class="ctl">
+        <span class="ctl-k">세기</span>
+        <input type="range" id="amp" min="0" max="200" value="100" aria-label="효과 세기">
+        <span class="ctl-v" id="ampv">1.00</span>
+      </div>
+      <div class="ctl">
+        <span class="ctl-k">속도</span>
+        <input type="range" id="spd" min="0" max="250" value="100" aria-label="시간 흐름 속도">
+        <span class="ctl-v" id="spdv">1.00</span>
+      </div>
+      <div class="ctl">
+        <span class="ctl-k">내용</span>
+        <div class="chips" id="srcs" role="group" aria-label="판에 넣을 내용"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap block">
+    <h2>코드 입력</h2>
+    <p class="sub">
+      여기에 친 HTML 이 위쪽 판으로 바로 들어갑니다. 안에 <code>&lt;style&gt;</code> 을 넣어도 되고,
+      <code>:hover</code> 도 그대로 걸립니다. 넣은 뒤에 위에서 만져 보세요.
+    </p>
+    <div class="edit">
+      <div class="edit-bar">
+        <div class="chips" id="presets"></div>
+        <span class="edit-note" id="editnote">고치면 바로 올라갑니다</span>
+      </div>
+      <textarea id="code" spellcheck="false" aria-label="판에 넣을 HTML"></textarea>
+    </div>
+  </section>
+
+  <section class="wrap block">
+    <h2>동작 원리</h2>
+    <div class="pipe">
+      <svg viewBox="0 0 900 250" role="img" aria-label="DOM 을 굽고 휘어 그린 뒤, 포인터를 다시 DOM 으로 되짚는 흐름">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" fill="#48536b"/>
+          </marker>
+          <marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" fill="#7ce7d0"/>
+          </marker>
+        </defs>
+
+        <g class="pbox">
+          <rect x="8" y="52" width="176" height="72" rx="14"/>
+          <text x="96" y="82">살아 있는 DOM</text>
+          <text x="96" y="104" class="s">투명하게 깔려 있음</text>
+        </g>
+        <g class="pbox">
+          <rect x="248" y="52" width="176" height="72" rx="14"/>
+          <text x="336" y="82">SVG 로 굽기</text>
+          <text x="336" y="104" class="s">바뀔 때만 다시</text>
+        </g>
+        <g class="pbox">
+          <rect x="488" y="52" width="176" height="72" rx="14"/>
+          <text x="576" y="82">셰이더로 휘기</text>
+          <text x="576" y="104" class="s">매 프레임</text>
+        </g>
+        <g class="pbox on">
+          <rect x="716" y="52" width="176" height="72" rx="14"/>
+          <text x="804" y="82">화면</text>
+          <text x="804" y="104" class="s">보이는 결과</text>
+        </g>
+
+        <path d="M190 88 H242" class="arw" marker-end="url(#ah)"/>
+        <path d="M430 88 H482" class="arw" marker-end="url(#ah)"/>
+        <path d="M670 88 H710" class="arw" marker-end="url(#ah)"/>
+
+        <g class="pbox alt">
+          <rect x="488" y="164" width="176" height="66" rx="14"/>
+          <text x="576" y="192">UV 되읽기</text>
+          <text x="576" y="213" class="s">한 픽셀만</text>
+        </g>
+        <g class="pbox alt">
+          <rect x="248" y="164" width="176" height="66" rx="14"/>
+          <text x="336" y="192">그 자리 요소</text>
+          <text x="336" y="213" class="s">누르기, 포커스</text>
+        </g>
+
+        <path d="M804 130 V197 H670" class="arw alt" marker-end="url(#ah2)"/>
+        <path d="M482 197 H430" class="arw alt" marker-end="url(#ah2)"/>
+        <path d="M248 197 H96 V130" class="arw alt" marker-end="url(#ah2)"/>
+        <text x="856" y="156" class="cap alt">손끝 좌표</text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <article>
+        <h3>굽기</h3>
+        <p>판 안의 DOM 을 SVG 한 장으로 감싸 이미지로 굽고, GPU 텍스처로 올립니다.
+          다시 굽는 건 내용이 바뀔 때뿐이라 휘는 애니메이션은 매 프레임 돌아도 가볍습니다.</p>
+      </article>
+      <article>
+        <h3>되짚기</h3>
+        <p>마우스가 있는 자리를 같은 셰이더로 한 번 더 그리되, 색 대신 원래 좌표를 칠합니다.
+          그 한 픽셀만 읽으면 손끝이 DOM 의 어디를 짚었는지 나옵니다.</p>
+      </article>
+      <article>
+        <h3>넘기기</h3>
+        <p>그 자리의 진짜 요소를 찾아 hover 표시를 붙이고 누릅니다.
+          글자칸이면 포커스를 주고, 그다음 키보드는 브라우저가 알아서 그 칸으로 보냅니다.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="wrap block">
+    <h2>한계와 지원</h2>
+    <ul class="limits">
+      <li>다른 도메인에서 불러온 이미지와 웹폰트는 굽는 단계에서 빠집니다. 인라인 SVG 와 그러데이션은 그대로 나옵니다.</li>
+      <li>글자를 끌어서 선택하거나 캐럿을 문장 중간에 놓는 건 안 됩니다. 포커스를 준 뒤 치는 것까지가 됩니다.</li>
+      <li>화면 낭독기와 탭 키는 캔버스가 아니라 뒤에 살아 있는 DOM 을 잡습니다. 접근성은 그대로 남습니다.</li>
+      <li>크롬 148에서 150 사이에는 원본 API 가 오리진 트라이얼로 열려 있습니다.
+        <code>chrome://flags/#canvas-draw-element</code> 를 켜면 굽는 단계 없이 매 프레임 그대로 올립니다.</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <p>영상 <a href="https://www.youtube.com/watch?v=8ucoskmA1yg" target="_blank" rel="noopener">이게 진짜 HTML이라고?</a> 를 보고 만들었습니다.
+    원본 제안은 <a href="https://github.com/WICG/html-in-canvas" target="_blank" rel="noopener">WICG/html-in-canvas</a> 에 있습니다.</p>
+</footer>
+
+<script type="module" src="./src/main.js"></script>
+<noscript><p style="padding:24px">자바스크립트를 켜야 판이 움직입니다.</p></noscript>
+</body>
+</html>

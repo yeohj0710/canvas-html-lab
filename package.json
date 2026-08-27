@@ -1,0 +1,10 @@
+{
+  "name": "canvas-html-lab",
+  "private": true,
+  "version": "1.0.0",
+  "description": "캔버스 안에 살아 있는 DOM 을 굽고 휘어 그리는 실험대",
+  "scripts": {
+    "dev": "npx --yes serve . -l 4321",
+    "deploy": "npx vercel --prod --yes"
+  }
+}
